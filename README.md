@@ -15,6 +15,8 @@ b. Linear Regression using Batch Gradient Descent, Stochastic Gradient Descent a
 #### 2. Logistic Regression
 Logistic Regression using the batch Gradient Descent Algorithm
 
+---
+
 #### 3. K Nearest Neighbours
 a. Impelmentation using the naive Euclidean Distance method
 
