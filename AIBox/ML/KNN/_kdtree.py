@@ -64,7 +64,7 @@ def brute_force_knn(X_train, y_train, X_query, k=3):
     return sorted([(d.item(), y_train[i].item()) for d, i in zip(values, indices)])
 
 # --- TEST RUNNER ---
-def run_comparison_tests(num_samples=100000, dim=100, k=3):
+def run_comparison_tests(num_samples=10000000, dim=3, k=3):
     print(f"Testing with {num_samples} samples in {dim}D space (k={k})")
     
     # 1. Generate Random Data
