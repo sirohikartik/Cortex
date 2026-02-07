@@ -20,7 +20,7 @@ Logistic Regression using the batch Gradient Descent Algorithm
 #### 3. K Nearest Neighbours
 a. Impelmentation using the naive Euclidean Distance method
 
-b. KD Tree Coming soon
+b. KD Tree 
 
 ---
 #### Note on AI Use
