@@ -30,6 +30,7 @@ b. KD Tree
 
 #### 1. Attention
 a. Self-Attention
+
 b. Multi-Head Self-Attention
 
 #### Note on AI Use
