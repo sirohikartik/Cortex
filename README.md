@@ -5,6 +5,8 @@ In this repository I put my implementations of various machine learning and deep
 
 ### What has been implemented now?
 
+
+## ML
 ---
 ##### 1. Linear Regression
 a. Linear Regression with Ridge Regularization using the Normal Equation 
@@ -23,6 +25,14 @@ a. Impelmentation using the naive Euclidean Distance method
 b. KD Tree 
 
 ---
+
+## DL
+
+#### 1. Attention
+a. Self-Attention
+
+b. Multi-Head Self-Attention
+
 #### Note on AI Use
 In some of the implementations, the code for running tests may be written by AI. 
 **All the algorithm implementation has been done by me.**
