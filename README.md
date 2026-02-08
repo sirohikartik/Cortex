@@ -26,6 +26,11 @@ b. KD Tree
 
 ---
 
+#### 4. Naive Bayes
+Naive Bayes using the Gaussian Distribution and log likelihood
+
+---
+
 ## DL
 
 #### 1. Attention
