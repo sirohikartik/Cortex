@@ -31,6 +31,11 @@ Naive Bayes using the Gaussian Distribution and log likelihood
 
 ---
 
+#### 5. Decision Trees
+Decision Trees using Information Gain and Entropy 
+
+---
+
 ## DL
 
 #### 1. Attention
