@@ -4,10 +4,11 @@ def casual_mask(input_matrix):
     for i in range(len(input_matrix)):
         for j in range(len(input_matrix[0])):
             if i<j :
-                input_matrix[i][j] = 0
+                input_matrix[i][j] = float('-inf')
     return input_matrix
 
 def efficient_mask(input_matrix):
+
 
 
 def run_tests(mask_fn):
