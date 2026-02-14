@@ -49,12 +49,12 @@ class PositionalEncoding(nn.Module):
 
 
 class LayerNorm(nn.Module):
-    def __init__(self,eps:float= 10e-6):
+    def __init__(self,d_model : int, eps:float= 10e-6):
         super().__init__()
         self.eps = eps
 
-        self.alpha = nn.Parameter(torch.ones(1)) # *
-        self.bias = nn.Parameter(torch.ones(1))  # +
+        self.alpha = nn.Parameter(torch.ones(d_model,1)) # *
+        self.bias = nn.Parameter(torch.ones(d_model,1))  # +
 
     def forward(self,x):
         mean = x.mean(dim=-1,keepdim=True)
@@ -166,12 +166,12 @@ class EncoderBlock(nn.Module):
         return x
 class Encoder(nn.Module):
 
-    def __init__(self,layers:nn.ModuleList)->None:
+    def __init__(self,layers:nn.ModuleList,norm : LayerNorm)->None:
         super().__init__()
 
         self.layers = layers
 
-        self.norm = LayerNorm()
+        self.norm = norm
 
     def forward(self,x,mask):
         for layer in self.layers:
