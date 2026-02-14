@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Mock Interview - DeepMind Style</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script type="module">
+        // Import Transformers.js for Whisper speech recognition
+        import { pipeline } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+        
+        // Make it available globally
+        window.transformersPipeline = pipeline;
+    </script>
     <style>
         * {
             margin: 0;
@@ -699,10 +706,14 @@
                                 Start Recording
                             </button>
                             <span id="recordingStatus"></span>
+                            <span style="color: #8b949e; font-size: 0.9em; margin-left: auto;">
+                                Tip: If recording fails, you can type your explanation below
+                            </span>
                         </div>
 
                         <textarea class="code-editor" id="codeEditor" placeholder="// Write your code here...
 // Or use voice recording to explain your approach
+// You can also type your verbal explanation here if voice recording doesn't work
 
 "></textarea>
 
@@ -750,12 +761,15 @@
         let currentRound = 'dsa';
         let difficulty = 3;
         let isRecording = false;
-        let recognition = null;
         let transcript = '';
         let currentQuestion = null;
         let testCases = [];
         let chatHistory = [];
         let questionsAsked = [];
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let transcriber = null;
+        let isTranscriberLoading = false;
 
         // Difficulty labels
         const difficultyLabels = ['Easy', 'Easy', 'Medium', 'Hard', 'Hard'];
@@ -771,34 +785,28 @@
             }
         });
 
-        // Initialize speech recognition
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
-
-            recognition.onresult = (event) => {
-                let interimTranscript = '';
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcriptPiece = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        transcript += transcriptPiece + ' ';
-                    } else {
-                        interimTranscript += transcriptPiece;
-                    }
-                }
-                document.getElementById('transcript').textContent = transcript + interimTranscript;
-                document.getElementById('transcriptSection').classList.remove('hidden');
-            };
-
-            recognition.onerror = (event) => {
-                console.error('Speech recognition error:', event.error);
-                if (isRecording) {
-                    toggleRecording();
-                }
-            };
+        // Initialize Whisper transcriber
+        async function initTranscriber() {
+            if (transcriber || isTranscriberLoading) return;
+            
+            isTranscriberLoading = true;
+            document.getElementById('recordingStatus').innerHTML = '<span style="color: #58a6ff;">Loading speech recognition model (first time only)...</span>';
+            
+            try {
+                transcriber = await window.transformersPipeline(
+                    'automatic-speech-recognition',
+                    'Xenova/whisper-tiny.en'
+                );
+                document.getElementById('recordingStatus').innerHTML = '<span style="color: #238636;">Speech recognition ready!</span>';
+                setTimeout(() => {
+                    document.getElementById('recordingStatus').textContent = '';
+                }, 3000);
+            } catch (error) {
+                console.error('Failed to load transcriber:', error);
+                document.getElementById('recordingStatus').innerHTML = '<span style="color: #da3633;">Failed to load speech recognition. You can still type your explanation.</span>';
+            } finally {
+                isTranscriberLoading = false;
+            }
         }
 
         // Save API key
@@ -842,30 +850,80 @@
             });
         });
 
-        // Toggle recording
-        function toggleRecording() {
-            if (!recognition) {
-                alert('Speech recognition is not supported in your browser. Please use Chrome or Edge.');
-                return;
-            }
-
+        // Toggle recording with Whisper
+        async function toggleRecording() {
             const btn = document.getElementById('recordBtn');
             const avatar = document.getElementById('avatar');
             
             if (!isRecording) {
-                recognition.start();
-                isRecording = true;
-                btn.textContent = 'Stop Recording';
-                btn.classList.add('recording');
-                avatar.classList.add('speaking');
-                document.getElementById('recordingStatus').innerHTML = '<span style="color: #da3633;">Recording...</span>';
+                // Initialize transcriber if not already loaded
+                if (!transcriber && !isTranscriberLoading) {
+                    await initTranscriber();
+                }
+                
+                if (!transcriber) {
+                    alert('Speech recognition is still loading. Please wait a moment and try again.');
+                    return;
+                }
+                
+                // Request microphone access
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    
+                    audioChunks = [];
+                    mediaRecorder = new MediaRecorder(stream);
+                    
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+                    
+                    mediaRecorder.onstop = async () => {
+                        // Convert audio to format Whisper can process
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        
+                        document.getElementById('recordingStatus').innerHTML = '<span style="color: #58a6ff;">Transcribing audio...</span>';
+                        
+                        try {
+                            // Convert blob to ArrayBuffer
+                            const arrayBuffer = await audioBlob.arrayBuffer();
+                            
+                            // Transcribe with Whisper
+                            const result = await transcriber(arrayBuffer);
+                            
+                            transcript += result.text + ' ';
+                            document.getElementById('transcript').textContent = transcript;
+                            document.getElementById('transcriptSection').classList.remove('hidden');
+                            document.getElementById('recordingStatus').textContent = '';
+                        } catch (error) {
+                            console.error('Transcription error:', error);
+                            document.getElementById('recordingStatus').innerHTML = '<span style="color: #da3633;">Transcription failed. Please try again.</span>';
+                        }
+                        
+                        // Stop all tracks
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    btn.textContent = 'Stop Recording';
+                    btn.classList.add('recording');
+                    avatar.classList.add('speaking');
+                    document.getElementById('recordingStatus').innerHTML = '<span style="color: #da3633;">Recording...</span>';
+                    
+                } catch (error) {
+                    console.error('Microphone access error:', error);
+                    alert('Microphone access denied. Please allow microphone access in your browser settings.');
+                }
+                
             } else {
-                recognition.stop();
+                // Stop recording
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                }
                 isRecording = false;
                 btn.textContent = 'Start Recording';
                 btn.classList.remove('recording');
                 avatar.classList.remove('speaking');
-                document.getElementById('recordingStatus').textContent = '';
             }
         }
 
