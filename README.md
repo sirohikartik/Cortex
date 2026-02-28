@@ -43,6 +43,10 @@ a. Self-Attention
 
 b. Multi-Head Self-Attention
 
+c. encoder
+
+d. casual masking
+
 #### Note on AI Use
 In some of the implementations, the code for running tests may be written by AI. 
 **All the algorithm implementation has been done by me.**
